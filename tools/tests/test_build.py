@@ -179,6 +179,14 @@ def make_map():
         m.way(ring(lat, lon, 12, 4), {"amenity": amenity, "building": "yes"}, closed=True)  # "p" (building)
         lat, lon = rnd()
         m.way(ring(lat, lon, 25, 5), {"amenity": amenity}, closed=True)  # "q"
+    for _ in range(12):  # game 1.7.1: drinking water taps ("v")
+        lat, lon = rnd()
+        m.node(lat, lon, {"amenity": "drinking_water"})
+    lat, lon = rnd()
+    m.way(ring(lat, lon, 6, 4), {"amenity": "drinking_water", "building": "yes"}, closed=True)  # "p" (building)
+    for shop in ["perfumery", "shoes", "mobile_phone", "telecommunication", "electronics"]:  # game 1.7.1 shops ("p")
+        lat, lon = rnd()
+        m.node(lat, lon, {"shop": shop})
     for _ in range(200):  # fields, meadows, parks
         lat, lon = rnd()
         m.way(ring(lat, lon, random.uniform(40, 400), 10, 0.4),
@@ -304,7 +312,7 @@ def archive_around(tiles, lat, lon, radius):
     found = {}
     for t in tiles_for_box(s, w, n_, e):
         for el in tiles.get(t, []):
-            if "p" not in el["k"] and "q" not in el["k"] and "a" not in el["k"]:
+            if not any(x in el["k"] for x in ("p", "q", "v", "a")):
                 continue
             if el["t"] == "n":
                 d = line_dist(lat, lon, el["c"])
@@ -391,6 +399,14 @@ def main():
         assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
         assert "c" in el, f"{k}: no centre"
     assert sum(1 for el in drinks.values() if el["k"] == "q") == 32, "q objects"
+    # Game 1.7.1: drinking water taps are "v", unless they are a building ("p").
+    taps = {k: el for k, el in by_key.items() if el["tags"].get("amenity") == "drinking_water"}
+    assert len(taps) == 13, f"drinking water taps: {len(taps)}"
+    for k, el in taps.items():
+        want_kind = "p" if "building" in el["tags"] else "v"
+        assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
+    shops171 = [el for el in by_key.values() if el["tags"].get("shop") in ("perfumery", "shoes", "mobile_phone", "telecommunication", "electronics")]
+    assert len(shops171) == 5 and all(el["k"] == "p" for el in shops171), "1.7.1 shops are plain points"
     motorway = [k for k in by_key if k[0] == "w" and by_key[k]["tags"].get("highway") == "motorway"]
     assert not motorway, "motorways are not roads for the game"
     print("single-object checks: ok")
@@ -401,7 +417,7 @@ def main():
         lat, lon = offset(LAT0, LON0, random.uniform(-6500, 6500), random.uniform(-6500, 6500))
         radius = random.choice([150, 200, 250, 600, 2000])
         want = {k for k, (kind, flat, lines) in expected.items()
-                if ("p" in kind or "q" in kind or "a" in kind) and obj_dist(lat, lon, flat, lines) <= radius}
+                if any(x in kind for x in ("p", "q", "v", "a")) and obj_dist(lat, lon, flat, lines) <= radius}
         got = archive_around(tiles, lat, lon, radius)
         missing = want - set(got)
         extra = set(got) - want
@@ -440,7 +456,7 @@ def main():
     assert summary.get("seek_index") == bt.SEEK_INDEX_VERSION, "summary without seek_index"
     centres = {}
     for k, (kind, flat, lines) in expected.items():
-        if not ("p" in kind or "q" in kind or "a" in kind):
+        if not any(x in kind for x in ("p", "q", "v", "a")):
             continue
         if k[0] == "n":
             centres[k] = flat[:2]

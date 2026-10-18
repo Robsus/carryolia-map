@@ -20,6 +20,9 @@ the Overpass answer it used to get (see the app's MapDataArchive):
                 (pubs, nightclubs, community centres: QUERY_POINTS_135).
                 Older versions skip the letter, so they don't show these as
                 plain buildings. An object that is also "p" is only "p".
+            v = discovery points block, objects the game asks for since 1.7.1
+                (drinking water taps: QUERY_POINTS_171), skipped by older
+                versions like "q". An object that is also "p" is only "p".
             a = discovery areas block ("out tags geom")
             r = roads (RoadRepository, "out body" + nodes)
   "tags"  all OSM tags
@@ -99,6 +102,8 @@ AMENITY_POINTS = {
 }
 # Since game 1.3.5 (letter "q", see above).
 AMENITY_POINTS_135 = {"pub", "nightclub", "community_centre"}
+# Since game 1.7.1 (letter "v", see above): Watertaps.
+AMENITY_POINTS_171 = {"drinking_water"}
 MAN_MADE_POINTS = {"windmill", "works", "petroleum_well"}
 TANK_CONTENTS = {"oil", "fuel", "diesel"}
 CRAFT_POINTS = {"bakery", "sawmill", "carpenter", "tailor", "blacksmith", "metal_construction", "welder"}
@@ -177,12 +182,27 @@ def is_point_135(tags, osm_type):
     return tags.get("amenity") in AMENITY_POINTS_135 and not is_point(tags, osm_type)
 
 
+def is_point_171(tags, osm_type):
+    """Discovery points the game asks for since 1.7.1 (and older versions don't): letter "v"."""
+    return tags.get("amenity") in AMENITY_POINTS_171 and not is_point(tags, osm_type)
+
+
+# Letters of the discovery's points block (the "p" block and its later additions).
+POINT_LETTERS = ("p", "q", "v")
+
+
+def has_point_letter(kind):
+    return any(letter in kind for letter in POINT_LETTERS)
+
+
 def point_kind(tags, osm_type):
-    """"p", "q" or "" for the discovery's points block."""
+    """"p", "q", "v" or "" for the discovery's points block."""
     if is_point(tags, osm_type):
         return "p"
     if is_point_135(tags, osm_type):
         return "q"
+    if is_point_171(tags, osm_type):
+        return "v"
     return ""
 
 
@@ -220,6 +240,8 @@ SEEK_TYPES = [
     "SMELTER", "FLORIST", "BICYCLE_SHOP", "RESTAURANT", "BUTCHER", "DEPARTMENT_STORE", "GARAGE", "CARPENTER",
     "SPINNING_MILL", "PUB", "NIGHTCLUB", "OIL_REFINERY", "VETERINARY", "POLICE_STATION", "FIRE_STATION",
     "TOWN_HALL", "LIBRARY", "COMMUNITY_CENTRE", "SCHOOL", "INDUSTRIAL",
+    # Since game 1.7.1.
+    "PERFUMERY", "SHOE_SHOP", "MOBILE_SHOP", "ELECTRONICS_SHOP", "WATER_TAP",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -341,6 +363,17 @@ def seek_matches(tags, osm_type):
         point("SCHOOL")
     if building == "industrial":
         point("INDUSTRIAL")
+    # Since game 1.7.1.
+    if shop == "perfumery":
+        point("PERFUMERY")
+    if shop == "shoes":
+        point("SHOE_SHOP")
+    if shop in ("mobile_phone", "telecommunication"):
+        point("MOBILE_SHOP")
+    if shop == "electronics":
+        point("ELECTRONICS_SHOP")
+    if amenity == "drinking_water":
+        point("WATER_TAP")
     return out
 
 
@@ -354,9 +387,9 @@ def seek_address(code, lat, lon):
 def seek_entries(element):
     """The index entries of a tile element (needs "t", "id", "k", "tags", "c"):
     [((z, x, y), entry)], one per kind of SeekConfig.FILTERS it matches. Only
-    objects the discovery itself returns (letters p, q, a) are indexed."""
+    objects the discovery itself returns (letters p, q, v, a) are indexed."""
     kinds = element.get("k", "")
-    if not ("p" in kinds or "q" in kinds or "a" in kinds) or "c" not in element:
+    if not (has_point_letter(kinds) or "a" in kinds) or "c" not in element:
         return []
     lat, lon = element["c"]
     result = []
@@ -618,7 +651,7 @@ def nodes_and_ways_worker(path, zoom, needed_ways, workers, index, lines_path):
         if not kind:
             continue
         element = {"t": "w", "id": obj.id, "k": kind, "tags": tags, "g": flat}
-        if "p" in kind or "q" in kind or "a" in kind:
+        if has_point_letter(kind) or "a" in kind:
             b = bounds_of(flat)
             element["b"] = b
             element["c"] = centre_of(b)
@@ -964,7 +997,8 @@ def main():
         lt = summary["largest_tile"]
         print(f"Largest tile:     {lt['gzip_bytes'] / 1000:.0f} kB gzip ({lt['elements']:,} elements) "
               f"at {lt['lat']}, {lt['lon']}")
-    print(f"Objects:          {c.get('nodes_p', 0) + c.get('nodes_q', 0):,} point nodes, {c.get('ways_p', 0) + c.get('ways_q', 0):,} building ways, "
+    print(f"Objects:          {sum(c.get('nodes_' + x, 0) for x in POINT_LETTERS):,} point nodes, "
+          f"{sum(c.get('ways_' + x, 0) for x in POINT_LETTERS):,} building ways, "
           f"{c.get('ways_a', 0):,} area ways, {c.get('ways_r', 0):,} roads")
     print(f"Relations:        {c.get('relations_wanted', 0):,} wanted, {c.get('relations_big', 0):,} too big, "
           f"{c.get('relation_tile_entries', 0):,} tile entries")
