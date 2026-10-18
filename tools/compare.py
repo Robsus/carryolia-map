@@ -128,7 +128,7 @@ class Archive:
         found = {}
         for t in self.tiles_for_box(s, w, n_, e):
             for el in self.tile(*t):
-                if "p" not in el["k"] and "q" not in el["k"] and "a" not in el["k"]:
+                if not any(x in el["k"] for x in ("p", "q", "v", "a")):
                     continue
                 if el["t"] == "n":
                     d = line_dist(lat, lon, el["c"])
@@ -306,8 +306,8 @@ def main():
         got = archive.around(lat, lon, args.radius)
         for block, doc in (("p", p_doc), ("a", a_doc)):
             want = {({"node": "n", "way": "w", "relation": "r"}[e["type"]], e["id"]) for e in doc["elements"]}
-            # "q" (since game 1.3.5) belongs to the points block too.
-            have = {k for k, (kinds, d, _) in got.items() if block in kinds or (block == "p" and "q" in kinds)}
+            # "q" (since game 1.3.5) and "v" (since 1.7.1) belong to the points block too.
+            have = {k for k, (kinds, d, _) in got.items() if block in kinds or (block == "p" and ("q" in kinds or "v" in kinds))}
             near_edge = {k for k, (kinds, d, _) in got.items() if d > args.radius - edge}
             only_archive = have - want - near_edge
             only_overpass = want - have
