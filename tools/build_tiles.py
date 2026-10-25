@@ -23,6 +23,9 @@ the Overpass answer it used to get (see the app's MapDataArchive):
             v = discovery points block, objects the game asks for since 1.7.1
                 (drinking water taps: QUERY_POINTS_171), skipped by older
                 versions like "q". An object that is also "p" is only "p".
+            w = discovery points block, objects the game asks for since 1.9.7
+                (bars, which work like Pubs in the game: QUERY_POINTS_197), skipped
+                by older versions like "q". An object that is also "p" is only "p".
             a = discovery areas block ("out tags geom")
             r = roads (RoadRepository, "out body" + nodes)
   "tags"  all OSM tags
@@ -104,6 +107,8 @@ AMENITY_POINTS = {
 AMENITY_POINTS_135 = {"pub", "nightclub", "community_centre"}
 # Since game 1.7.1 (letter "v", see above): Watertaps.
 AMENITY_POINTS_171 = {"drinking_water"}
+# Since game 1.9.7 (letter "w", see above): bars.
+AMENITY_POINTS_197 = {"bar"}
 MAN_MADE_POINTS = {"windmill", "works", "petroleum_well"}
 TANK_CONTENTS = {"oil", "fuel", "diesel"}
 CRAFT_POINTS = {"bakery", "sawmill", "carpenter", "tailor", "blacksmith", "metal_construction", "welder"}
@@ -187,8 +192,13 @@ def is_point_171(tags, osm_type):
     return tags.get("amenity") in AMENITY_POINTS_171 and not is_point(tags, osm_type)
 
 
+def is_point_197(tags, osm_type):
+    """Discovery points the game asks for since 1.9.7 (and older versions don't): letter "w"."""
+    return tags.get("amenity") in AMENITY_POINTS_197 and not is_point(tags, osm_type)
+
+
 # Letters of the discovery's points block (the "p" block and its later additions).
-POINT_LETTERS = ("p", "q", "v")
+POINT_LETTERS = ("p", "q", "v", "w")
 
 
 def has_point_letter(kind):
@@ -196,13 +206,15 @@ def has_point_letter(kind):
 
 
 def point_kind(tags, osm_type):
-    """"p", "q", "v" or "" for the discovery's points block."""
+    """"p", "q", "v", "w" or "" for the discovery's points block."""
     if is_point(tags, osm_type):
         return "p"
     if is_point_135(tags, osm_type):
         return "q"
     if is_point_171(tags, osm_type):
         return "v"
+    if is_point_197(tags, osm_type):
+        return "w"
     return ""
 
 
@@ -242,6 +254,8 @@ SEEK_TYPES = [
     "TOWN_HALL", "LIBRARY", "COMMUNITY_CENTRE", "SCHOOL", "INDUSTRIAL",
     # Since game 1.7.1.
     "PERFUMERY", "SHOE_SHOP", "MOBILE_SHOP", "ELECTRONICS_SHOP", "WATER_TAP",
+    # Since game 1.9.7.
+    "BAR",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -345,6 +359,8 @@ def seek_matches(tags, osm_type):
         point("PUB")
     if amenity == "nightclub":
         point("NIGHTCLUB")
+    if amenity == "bar":  # since game 1.9.7
+        point("BAR")
     if industrial in ("refinery", "oil", "petroleum"):
         point("OIL_REFINERY")
     if amenity == "veterinary":
@@ -387,7 +403,7 @@ def seek_address(code, lat, lon):
 def seek_entries(element):
     """The index entries of a tile element (needs "t", "id", "k", "tags", "c"):
     [((z, x, y), entry)], one per kind of SeekConfig.FILTERS it matches. Only
-    objects the discovery itself returns (letters p, q, v, a) are indexed."""
+    objects the discovery itself returns (letters p, q, v, w, a) are indexed."""
     kinds = element.get("k", "")
     if not (has_point_letter(kinds) or "a" in kinds) or "c" not in element:
         return []
