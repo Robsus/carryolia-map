@@ -15,6 +15,8 @@ nwr/amenity=place_of_worship,restaurant,fast_food,cafe,food_court,veterinary,fue
 nwr/amenity=pub,nightclub,community_centre
 # Since game 1.7.1 (marker letter "v"): Watertaps.
 nwr/amenity=drinking_water
+# Since game 1.9.7 (marker letter "w"): bars (they work like Pubs in the game).
+nwr/amenity=bar
 nwr/tourism=museum
 nwr/man_made=windmill,works,petroleum_well,storage_tank
 nwr/craft=bakery,sawmill,carpenter,tailor,blacksmith,metal_construction,welder

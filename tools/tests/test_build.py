@@ -179,6 +179,11 @@ def make_map():
         m.way(ring(lat, lon, 12, 4), {"amenity": amenity, "building": "yes"}, closed=True)  # "p" (building)
         lat, lon = rnd()
         m.way(ring(lat, lon, 25, 5), {"amenity": amenity}, closed=True)  # "q"
+    for _ in range(12):  # game 1.9.7: bars ("w")
+        lat, lon = rnd()
+        m.node(lat, lon, {"amenity": "bar"})
+    lat, lon = rnd()
+    m.way(ring(lat, lon, 10, 4), {"amenity": "bar", "building": "yes"}, closed=True)  # "p" (building)
     for _ in range(12):  # game 1.7.1: drinking water taps ("v")
         lat, lon = rnd()
         m.node(lat, lon, {"amenity": "drinking_water"})
@@ -312,7 +317,7 @@ def archive_around(tiles, lat, lon, radius):
     found = {}
     for t in tiles_for_box(s, w, n_, e):
         for el in tiles.get(t, []):
-            if not any(x in el["k"] for x in ("p", "q", "v", "a")):
+            if not any(x in el["k"] for x in ("p", "q", "v", "w", "a")):
                 continue
             if el["t"] == "n":
                 d = line_dist(lat, lon, el["c"])
@@ -405,6 +410,13 @@ def main():
     for k, el in taps.items():
         want_kind = "p" if "building" in el["tags"] else "v"
         assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
+    # Game 1.9.7: bars are "w", unless they are a building ("p").
+    bars = {k: el for k, el in by_key.items() if el["tags"].get("amenity") == "bar"}
+    assert len(bars) == 13, f"bars: {len(bars)}"
+    for k, el in bars.items():
+        want_kind = "p" if "building" in el["tags"] else "w"
+        assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
+        assert "c" in el, f"{k}: no centre"
     shops171 = [el for el in by_key.values() if el["tags"].get("shop") in ("perfumery", "shoes", "mobile_phone", "telecommunication", "electronics")]
     assert len(shops171) == 5 and all(el["k"] == "p" for el in shops171), "1.7.1 shops are plain points"
     motorway = [k for k in by_key if k[0] == "w" and by_key[k]["tags"].get("highway") == "motorway"]
@@ -417,7 +429,7 @@ def main():
         lat, lon = offset(LAT0, LON0, random.uniform(-6500, 6500), random.uniform(-6500, 6500))
         radius = random.choice([150, 200, 250, 600, 2000])
         want = {k for k, (kind, flat, lines) in expected.items()
-                if any(x in kind for x in ("p", "q", "v", "a")) and obj_dist(lat, lon, flat, lines) <= radius}
+                if any(x in kind for x in ("p", "q", "v", "w", "a")) and obj_dist(lat, lon, flat, lines) <= radius}
         got = archive_around(tiles, lat, lon, radius)
         missing = want - set(got)
         extra = set(got) - want
@@ -456,7 +468,7 @@ def main():
     assert summary.get("seek_index") == bt.SEEK_INDEX_VERSION, "summary without seek_index"
     centres = {}
     for k, (kind, flat, lines) in expected.items():
-        if not any(x in kind for x in ("p", "q", "v", "a")):
+        if not any(x in kind for x in ("p", "q", "v", "w", "a")):
             continue
         if k[0] == "n":
             centres[k] = flat[:2]
@@ -503,7 +515,7 @@ def main():
             seek_checked += len(want)
     print(f"seek index: 60 circles x {len(bt.SEEK_TYPES)} kinds, {seek_checked:,} finds expected, "
           f"{len(kinds_seen)} kinds present, {seek_failures} with differences")
-    assert {"SHOP", "FOREST", "WATER", "PUB", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
+    assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
             "FIELD", "PASTURE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
 
     if failures or road_failures or seek_failures:

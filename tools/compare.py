@@ -186,7 +186,7 @@ DISCOVERY = """[out:json][timeout:60]{date};
 (
   nwr["building"](around:{r},{lat},{lon});
   nwr["shop"](around:{r},{lat},{lon});
-  nwr["amenity"~"^(place_of_worship|restaurant|fast_food|cafe|food_court|veterinary|fuel|police|fire_station|townhall|library|school|college|university|pub|nightclub|community_centre)$"](around:{r},{lat},{lon});
+  nwr["amenity"~"^(place_of_worship|restaurant|fast_food|cafe|food_court|veterinary|fuel|police|fire_station|townhall|library|school|college|university|pub|bar|nightclub|community_centre)$"](around:{r},{lat},{lon});
   nwr["tourism"="museum"](around:{r},{lat},{lon});
   nwr["man_made"~"^(windmill|works|petroleum_well)$"](around:{r},{lat},{lon});
   nwr["man_made"="storage_tank"]["content"~"^(oil|fuel|diesel)$"](around:{r},{lat},{lon});
