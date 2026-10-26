@@ -17,6 +17,9 @@ nwr/amenity=pub,nightclub,community_centre
 nwr/amenity=drinking_water
 # Since game 1.9.7 (marker letter "w"): bars (they work like Pubs in the game).
 nwr/amenity=bar
+# Since game 2.0.8: villages, towns and cities, for the Seek index only (kinds
+# VILLAGE / TOWN / CITY, see PLACES in build_tiles.py; never in the normal tiles).
+n/place=village,town,city
 nwr/tourism=museum
 nwr/man_made=windmill,works,petroleum_well,storage_tank
 nwr/craft=bakery,sawmill,carpenter,tailor,blacksmith,metal_construction,welder
