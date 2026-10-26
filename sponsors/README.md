@@ -2,8 +2,10 @@
 
 Carryolia (from version 2.0.2) shows a photo in a building's **Details** popup
 when that building is in `sponsors.json`, marked "📷 Sponsored photo". The game
-fetches this list once a day, so adding, changing or ending a sponsor needs no
-app update: commit to `main` and phones pick it up within about a day.
+fetches this list at every game start (and at most once an hour while playing;
+2.0.2–2.0.3: once a day), so adding, changing or ending a sponsor needs no app
+update: commit to `main` and it shows the next time someone starts the game
+(GitHub's file server can lag a few minutes behind a commit).
 
 The photos and this list are **public** (anyone can browse this repository).
 
@@ -32,7 +34,7 @@ The photos and this list are **public** (anyone can browse this repository).
 | `lat`, `lon` | yes* | The shop's position (from openstreetmap.org, right-click ▸ "Show address") |
 | `photo` | yes | Path relative to this folder (`photos/….jpg`), or a full `https://` address |
 | `caption` | no | One short line under the photo, shown as written (not translated) |
-| `link` | no | Website opened by the 🌐 link (otherwise the website tag from OpenStreetMap) |
+| `link` | no | The website the sponsor sent you, shown as a 🌐 link. Without it no website is shown (game 2.0.3+; 2.0.2 fell back to the OpenStreetMap website tag) |
 | `from` | no | First day shown, `YYYY-MM-DD` |
 | `until` | no | Last day shown, `YYYY-MM-DD` (inclusive). After it the entry is ignored. |
 
@@ -50,6 +52,33 @@ always fill in all four; an entry with only `name` + `lat`/`lon` also works.
 
    The "Check sponsors" workflow runs the first check on every push that
    touches `sponsors/`.
+
+## Example: Slagerij Joosten, Steenstraat 16, Horst
+
+openstreetmap.org shows it as `Knooppunt: Slagerij Joosten (2792432398)`, location
+`51.4532143, 6.0529437` ("Knooppunt" = node). Photo saved as
+`photos/slagerij-joosten-horst.jpg`. The entry in `sponsors.json`:
+
+```json
+{
+  "format": 1,
+  "sponsors": [
+    {
+      "building": "node:2792432398",
+      "name": "Slagerij Joosten",
+      "lat": 51.4532143,
+      "lon": 6.0529437,
+      "photo": "photos/slagerij-joosten-horst.jpg",
+      "caption": "Ambachtelijke slager in Horst",
+      "link": "https://slagerijjoosten.nl/site/",
+      "from": "2026-11-01",
+      "until": "2027-10-31"
+    }
+  ]
+}
+```
+
+More sponsors: add another `{ … }` block inside the `[ ]`, separated by a comma.
 
 ## Ending a sponsor
 
