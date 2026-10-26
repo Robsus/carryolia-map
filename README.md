@@ -35,6 +35,13 @@ newest per region are kept. The game starts from
 
 which lists the newest release of every region.
 
+## Sponsored shop photos
+
+`sponsors/` holds the list of sponsored shop photos that Carryolia (2.0.2+)
+shows in a building's Details, and the photos themselves. The game reads
+`sponsors/sponsors.json` from the `main` branch once a day. How to add one:
+[`sponsors/README.md`](sponsors/README.md); check with `python tools/check_sponsors.py`.
+
 ## Building it yourself
 
     sudo apt install osmium-tool && pip install osmium pmtiles

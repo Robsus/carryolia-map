@@ -1,0 +1,20 @@
+name: Check sponsors
+
+# Checks sponsors/sponsors.json and its photos (tools/check_sponsors.py)
+# whenever they change. Read by Carryolia 2.0.2+ (sponsored shop photos).
+on:
+  push:
+    paths: ["sponsors/**", "tools/check_sponsors.py"]
+  pull_request:
+    paths: ["sponsors/**", "tools/check_sponsors.py"]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/check_sponsors.py
