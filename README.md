@@ -39,7 +39,7 @@ which lists the newest release of every region.
 
 `sponsors/` holds the list of sponsored shop photos that Carryolia (2.0.2+)
 shows in a building's Details, and the photos themselves. The game reads
-`sponsors/sponsors.json` from the `main` branch once a day. How to add one:
+`sponsors/sponsors.json` from the `main` branch at every game start (2.0.4+). How to add one:
 [`sponsors/README.md`](sponsors/README.md); check with `python tools/check_sponsors.py`.
 
 ## Building it yourself

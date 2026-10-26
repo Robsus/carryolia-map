@@ -2,8 +2,10 @@
 
 Carryolia (from version 2.0.2) shows a photo in a building's **Details** popup
 when that building is in `sponsors.json`, marked "📷 Sponsored photo". The game
-fetches this list once a day, so adding, changing or ending a sponsor needs no
-app update: commit to `main` and phones pick it up within about a day.
+fetches this list at every game start (and at most once an hour while playing;
+2.0.2–2.0.3: once a day), so adding, changing or ending a sponsor needs no app
+update: commit to `main` and it shows the next time someone starts the game
+(GitHub's file server can lag a few minutes behind a commit).
 
 The photos and this list are **public** (anyone can browse this repository).
 
