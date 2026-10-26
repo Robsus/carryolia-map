@@ -189,6 +189,16 @@ def make_map():
         m.node(lat, lon, {"amenity": "drinking_water"})
     lat, lon = rnd()
     m.way(ring(lat, lon, 6, 4), {"amenity": "drinking_water", "building": "yes"}, closed=True)  # "p" (building)
+    # Game 2.0.8: places, Seek index only (named village / town / city; not hamlets, not unnamed).
+    for place, name in [("village", "Dorp A"), ("village", "Dorp B"), ("village", None), ("town", "Stadje"),
+                        ("city", "Grote Stad"), ("hamlet", "Gehucht"), ("suburb", "Wijk")]:
+        lat, lon = rnd()
+        tags = {"place": place, "population": "1234", "wikidata": "Q1"}
+        if name:
+            tags["name"] = name
+        if place == "city":
+            tags.update({f"name:{lang}": name + lang for lang in ["de", "en", "fr", "nl", "ru"]})
+        m.node(lat, lon, tags)
     for shop in ["perfumery", "shoes", "mobile_phone", "telecommunication", "electronics"]:  # game 1.7.1 shops ("p")
         lat, lon = rnd()
         m.node(lat, lon, {"shop": shop})
@@ -492,6 +502,8 @@ def main():
         n_, e_ = offset(lat, lon, radius, radius)
         squares = tiles_for_box(s_, w_, n_, e_, bt.SEEK_INDEX_ZOOM)
         for name in bt.SEEK_TYPES:
+            if name in bt.PLACE_SEEK_KINDS.values():
+                continue  # checked below (game 2.0.8)
             code = bt.SEEK_CODE[name]
             want = {}
             for k, c in centres.items():
@@ -517,6 +529,27 @@ def main():
           f"{len(kinds_seen)} kinds present, {seek_failures} with differences")
     assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
             "FIELD", "PASTURE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+
+    # Game 2.0.8: places in the Seek index, each in its own square, only name / place / population.
+    want_places = {}
+    for nid, (lat, lon, tags) in m.nodes.items():
+        kind = bt.PLACE_SEEK_KINDS.get((tags or {}).get("place"))
+        if kind and tags.get("name"):
+            want_places[nid] = (kind, lat, lon, {k: tags[k] for k in ("name", "place", "population") if k in tags})
+    got_places = {}
+    for (code, x, y), entries in SEEK.items():
+        for e in entries:
+            if code in (bt.SEEK_CODE["VILLAGE"], bt.SEEK_CODE["TOWN"], bt.SEEK_CODE["CITY"]):
+                xy = bt.tile_xy(e["c"][0], e["c"][1], n12)
+                assert (int(xy[0]), int(xy[1])) == (x, y), f"place {e['id']} in the wrong square"
+                got_places[e["id"]] = (bt.SEEK_TYPES[code - 1], e["c"][0], e["c"][1], e["tags"])
+    place_failures = 0 if got_places == want_places else 1
+    if place_failures:
+        print(f"places: want {want_places}\n        got {got_places}")
+    print(f"places: {len(want_places)} expected (hamlet, suburb and unnamed left out), {place_failures} with differences")
+    tiled = {el["id"] for els in tiles.values() for el in els if el["t"] == "n" and el["id"] in want_places}
+    assert not tiled, f"places in the normal tiles: {tiled}"
+    seek_failures += place_failures
 
     if failures or road_failures or seek_failures:
         sys.exit(1)

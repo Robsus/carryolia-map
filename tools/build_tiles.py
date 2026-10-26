@@ -71,6 +71,15 @@ from 1), in the same {"v": 1, "e": [...]} layout as a tile:
 The summary (and so map-data.json) says "seek_index": SEEK_INDEX_VERSION;
 a region without it is searched through Overpass, as before.
 
+PLACES (since game 2.0.8, the "village, town, city" goals): named place nodes
+(place=village, town, city) go into the Seek index only, as kinds VILLAGE,
+TOWN and CITY, with just their name, place and population tags (big cities
+carry hundreds of name:xx tags). They are not discovery objects, so they
+never go into the normal tiles: older game versions don't see them at all.
+The index format stays 1 (a higher number would make older versions treat
+every region as unindexed). An archive built before this simply has no
+place entries; the game then finds nothing and tries again later.
+
 Usage:
   python build_tiles.py <filtered.osm.pbf> --name netherlands --out-dir out
 
@@ -256,6 +265,8 @@ SEEK_TYPES = [
     "PERFUMERY", "SHOE_SHOP", "MOBILE_SHOP", "ELECTRONICS_SHOP", "WATER_TAP",
     # Since game 1.9.7.
     "BAR",
+    # Since game 2.0.8: places, in the index only (see PLACES above; place_seek_entry()).
+    "VILLAGE", "TOWN", "CITY",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -391,6 +402,20 @@ def seek_matches(tags, osm_type):
     if amenity == "drinking_water":
         point("WATER_TAP")
     return out
+
+
+# Since game 2.0.8 (see PLACES): place=* value -> Seek kind, and the tags kept.
+PLACE_SEEK_KINDS = {"village": "VILLAGE", "town": "TOWN", "city": "CITY"}
+PLACE_TAGS_KEPT = ("name", "place", "population")
+
+
+def place_seek_entry(osm_id, tags, lat, lon):
+    """((z, x, y), entry) of a named village / town / city node, or None."""
+    kind = PLACE_SEEK_KINDS.get(tags.get("place"))
+    if kind is None or not tags.get("name"):
+        return None
+    kept = {k: tags[k] for k in PLACE_TAGS_KEPT if k in tags}
+    return seek_address(SEEK_CODE[kind], lat, lon), {"t": "n", "id": osm_id, "c": [lat, lon], "tags": kept}
 
 
 def seek_address(code, lat, lon):
@@ -568,6 +593,18 @@ class LineSink:
             self.stats.count("seek_entries")
             self.stats.bytes_by_kind["seek"] = self.stats.bytes_by_kind.get("seek", 0) + len(text)
 
+    def add_place(self, osm_id, tags, lat, lon):
+        """Since game 2.0.8: a named village / town / city node into the Seek index (see PLACES)."""
+        found = place_seek_entry(osm_id, tags, lat, lon)
+        if found is None:
+            return
+        (z, x, y), entry = found
+        text = dumps(entry)
+        self.f.write(f"{zxy_to_tileid(z, x, y):020d}\t{text}\n")
+        self.stats.count("seek_entries")
+        self.stats.count("places")
+        self.stats.bytes_by_kind["seek"] = self.stats.bytes_by_kind.get("seek", 0) + len(text)
+
     def add_stub(self, element, pieces, kind):
         """The tile entries of a shared object: per tile, its outline pieces there."""
         for t, runs in pieces.items():
@@ -636,6 +673,9 @@ def nodes_and_ways_worker(path, zoom, needed_ways, workers, index, lines_path):
             if not obj.tags:
                 continue
             tags = {t.k: t.v for t in obj.tags}
+            # Since game 2.0.8: places go into the Seek index only (see PLACES).
+            if "place" in tags and obj.location.valid():
+                sink.add_place(obj.id, tags, deg(obj.location.y), deg(obj.location.x))
             kind = point_kind(tags, "n")
             if not kind or not obj.location.valid():
                 continue
@@ -1018,7 +1058,8 @@ def main():
           f"{c.get('ways_a', 0):,} area ways, {c.get('ways_r', 0):,} roads")
     print(f"Relations:        {c.get('relations_wanted', 0):,} wanted, {c.get('relations_big', 0):,} too big, "
           f"{c.get('relation_tile_entries', 0):,} tile entries")
-    print(f"Seek index:       {c.get('seek_entries', 0):,} entries (zoom {SEEK_INDEX_ZOOM} squares)")
+    print(f"Seek index:       {c.get('seek_entries', 0):,} entries (zoom {SEEK_INDEX_ZOOM} squares), "
+          f"{c.get('places', 0):,} places")
     print(f"Shared objects:   {c.get('shared_objects', 0):,} ({c.get('ways_shared', 0):,} ways, "
           f"{c.get('relations_shared', 0):,} relations), stored once instead of in every tile")
     total = sum(stats.bytes_by_kind.values()) or 1
