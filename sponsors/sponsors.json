@@ -1,4 +1,16 @@
 {
   "format": 1,
-  "sponsors": []
+  "sponsors": [
+    {
+      "building": "node:1234567890",
+      "name": "Example Shop",
+      "lat": 51.45391,
+      "lon": 6.05172,
+      "photo": "photos/example-shop-horst.jpg",
+      "caption": "Open every day from 9:00",
+      "link": "https://www.example.com",
+      "from": "2026-11-01",
+      "until": "2027-10-31"
+    }
+  ]
 }
