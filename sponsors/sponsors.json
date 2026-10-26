@@ -2,13 +2,13 @@
   "format": 1,
   "sponsors": [
     {
-      "building": "node:1234567890",
-      "name": "Example Shop",
-      "lat": 51.45391,
-      "lon": 6.05172,
+      "building": "node:2792432398",
+      "name": "Slagerij Joosten",
+      "lat": 51.4532143,
+      "lon": 6.0529437,
       "photo": "photos/example-shop-horst.jpg",
       "caption": "Open every day from 9:00",
-      "link": "https://www.example.com",
+      "link": "https://slagerijjoosten.nl/site/",
       "from": "2026-10-01",
       "until": "2027-10-31"
     }
