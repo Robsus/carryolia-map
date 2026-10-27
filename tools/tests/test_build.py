@@ -202,6 +202,9 @@ def make_map():
     for shop in ["perfumery", "shoes", "mobile_phone", "telecommunication", "electronics"]:  # game 1.7.1 shops ("p")
         lat, lon = rnd()
         m.node(lat, lon, {"shop": shop})
+    for _ in range(3):  # game 2.0.13: opticians (Seek kind OPTICIAN)
+        lat, lon = rnd()
+        m.node(lat, lon, {"shop": "optician"})
     for _ in range(200):  # fields, meadows, parks
         lat, lon = rnd()
         m.way(ring(lat, lon, random.uniform(40, 400), 10, 0.4),
@@ -528,7 +531,11 @@ def main():
     print(f"seek index: 60 circles x {len(bt.SEEK_TYPES)} kinds, {seek_checked:,} finds expected, "
           f"{len(kinds_seen)} kinds present, {seek_failures} with differences")
     assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
-            "FIELD", "PASTURE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+            "FIELD", "PASTURE", "OPTICIAN"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+    # Game 2.0.13: OPTICIAN comes after the places, at code 57 (the game's SeekConfig.SEEK_INDEX_TYPES).
+    assert bt.SEEK_CODE["OPTICIAN"] == 57, bt.SEEK_CODE["OPTICIAN"]
+    opticians = [e for (code, _, _), es in SEEK.items() if code == 57 for e in es]
+    assert len(opticians) == 3 and all(e["tags"].get("shop") == "optician" for e in opticians), opticians
 
     # Game 2.0.8: places in the Seek index, each in its own square, only name / place / population.
     want_places = {}
