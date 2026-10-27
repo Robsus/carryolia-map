@@ -267,6 +267,9 @@ SEEK_TYPES = [
     "BAR",
     # Since game 2.0.8: places, in the index only (see PLACES above; place_seek_entry()).
     "VILLAGE", "TOWN", "CITY",
+    # Since game 2.0.13: opticians (shop=optician, the game's glass chain). The
+    # shops were already in the tiles (all shop=* are kept); only the kind is new.
+    "OPTICIAN",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -401,6 +404,9 @@ def seek_matches(tags, osm_type):
         point("ELECTRONICS_SHOP")
     if amenity == "drinking_water":
         point("WATER_TAP")
+    # Since game 2.0.13.
+    if shop == "optician":
+        point("OPTICIAN")
     return out
 
 
