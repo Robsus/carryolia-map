@@ -270,6 +270,9 @@ SEEK_TYPES = [
     # Since game 2.0.13: opticians (shop=optician, the game's glass chain). The
     # shops were already in the tiles (all shop=* are kept); only the kind is new.
     "OPTICIAN",
+    # Since game 2.0.15: bookstores (shop=books) and toy stores (shop=toys), the
+    # game's paper chain (2.0.14). Already in the tiles; only the kinds are new.
+    "BOOKSTORE", "TOY_STORE",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -407,6 +410,11 @@ def seek_matches(tags, osm_type):
     # Since game 2.0.13.
     if shop == "optician":
         point("OPTICIAN")
+    # Since game 2.0.15.
+    if shop == "books":
+        point("BOOKSTORE")
+    if shop == "toys":
+        point("TOY_STORE")
     return out
 
 
