@@ -1,6 +1,6 @@
 # Map data status
 
-Updated 2026-10-26 21:49 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
+Updated 2026-10-27 07:16 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
 
 | Region | Release | OSM data of | Archive (MB) | Parts | Monthly day |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -35,7 +35,7 @@ Updated 2026-10-26 21:49 UTC: 105 of 105 regions built. Written by the "Build ma
 | england | england-2026-10-26-r14 | 2026-10-25 | 2,720 | 2 | 12 |
 | estonia | estonia-2026-10-26-r14 | 2026-10-25 | 387 | 1 | 8 |
 | faroe-islands | faroe-islands-2026-10-26-r14 | 2026-10-25 | 13 | 1 | 6 |
-| finland | finland-2026-10-26-r14 | 2026-10-25 | 2,582 | 2 | 24 |
+| finland | finland-2026-10-27-r14 | 2026-10-25 | 2,582 | 2 | 24 |
 | franche-comte | franche-comte-2026-10-26-r14 | 2026-10-25 | 242 | 1 | 3 |
 | georgia | georgia-2026-10-26-r14 | 2026-10-25 | 263 | 1 | 15 |
 | greece | greece-2026-10-26-r14 | 2026-10-25 | 1,005 | 1 | 20 |
