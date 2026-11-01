@@ -208,6 +208,10 @@ def make_map():
     for shop in ["books", "books", "toys", "toys"]:  # game 2.0.15: Seek kinds BOOKSTORE, TOY_STORE
         lat, lon = rnd()
         m.node(lat, lon, {"shop": shop})
+    # game 5.0.12: Seek kinds HAIRDRESSER, BEAUTY_SALON, INTERIOR_STORE
+    for shop in ["hairdresser", "hairdresser", "beauty", "beauty", "interior_decoration", "interior_decoration"]:
+        lat, lon = rnd()
+        m.node(lat, lon, {"shop": shop})
     for _ in range(200):  # fields, meadows, parks
         lat, lon = rnd()
         m.way(ring(lat, lon, random.uniform(40, 400), 10, 0.4),
@@ -534,7 +538,8 @@ def main():
     print(f"seek index: 60 circles x {len(bt.SEEK_TYPES)} kinds, {seek_checked:,} finds expected, "
           f"{len(kinds_seen)} kinds present, {seek_failures} with differences")
     assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
-            "FIELD", "PASTURE", "OPTICIAN", "BOOKSTORE", "TOY_STORE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+            "FIELD", "PASTURE", "OPTICIAN", "BOOKSTORE", "TOY_STORE",
+            "HAIRDRESSER", "BEAUTY_SALON", "INTERIOR_STORE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
     # Game 2.0.13: OPTICIAN comes after the places, at code 57 (the game's SeekConfig.SEEK_INDEX_TYPES).
     assert bt.SEEK_CODE["OPTICIAN"] == 57, bt.SEEK_CODE["OPTICIAN"]
     opticians = [e for (code, _, _), es in SEEK.items() if code == 57 for e in es]
@@ -542,6 +547,11 @@ def main():
     # Game 2.0.15: BOOKSTORE 58, TOY_STORE 59 (the game's SeekConfig.SEEK_INDEX_TYPES).
     assert (bt.SEEK_CODE["BOOKSTORE"], bt.SEEK_CODE["TOY_STORE"]) == (58, 59)
     for code, shop in ((58, "books"), (59, "toys")):
+        found = [e for (c, _, _), es in SEEK.items() if c == code for e in es]
+        assert len(found) == 2 and all(e["tags"].get("shop") == shop for e in found), (code, found)
+    # Game 5.0.12: HAIRDRESSER 60, BEAUTY_SALON 61, INTERIOR_STORE 62 (the game's SeekConfig.SEEK_INDEX_TYPES).
+    assert (bt.SEEK_CODE["HAIRDRESSER"], bt.SEEK_CODE["BEAUTY_SALON"], bt.SEEK_CODE["INTERIOR_STORE"]) == (60, 61, 62)
+    for code, shop in ((60, "hairdresser"), (61, "beauty"), (62, "interior_decoration")):
         found = [e for (c, _, _), es in SEEK.items() if c == code for e in es]
         assert len(found) == 2 and all(e["tags"].get("shop") == shop for e in found), (code, found)
 
