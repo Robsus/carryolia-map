@@ -17,6 +17,8 @@ nwr/amenity=pub,nightclub,community_centre
 nwr/amenity=drinking_water
 # Since game 1.9.7 (marker letter "w"): bars (they work like Pubs in the game).
 nwr/amenity=bar
+# Since game 5.0.13 (marker letter "x"): ice cream parlours (shop=ice_cream is already in nwr/shop).
+nwr/amenity=ice_cream
 # Since game 2.0.8: villages, towns and cities, for the Seek index only (kinds
 # VILLAGE / TOWN / CITY, see PLACES in build_tiles.py; never in the normal tiles).
 n/place=village,town,city

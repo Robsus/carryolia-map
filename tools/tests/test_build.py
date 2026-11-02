@@ -184,6 +184,15 @@ def make_map():
         m.node(lat, lon, {"amenity": "bar"})
     lat, lon = rnd()
     m.way(ring(lat, lon, 10, 4), {"amenity": "bar", "building": "yes"}, closed=True)  # "p" (building)
+    for _ in range(5):  # game 5.0.13: ice cream parlours ("x")
+        lat, lon = rnd()
+        m.node(lat, lon, {"amenity": "ice_cream"})
+    lat, lon = rnd()
+    m.node(lat, lon, {"amenity": "ice_cream", "shop": "ice_cream"})  # "p" (a shop)
+    # game 5.0.13: Seek kinds PET_SHOP, GIFT_SHOP, JEWELLER (ICE_CREAM_PARLOUR from the parlours above)
+    for shop in ["pet", "pet", "gift", "gift", "jewelry", "jewellery"]:
+        lat, lon = rnd()
+        m.node(lat, lon, {"shop": shop})
     for _ in range(12):  # game 1.7.1: drinking water taps ("v")
         lat, lon = rnd()
         m.node(lat, lon, {"amenity": "drinking_water"})
@@ -337,7 +346,7 @@ def archive_around(tiles, lat, lon, radius):
     found = {}
     for t in tiles_for_box(s, w, n_, e):
         for el in tiles.get(t, []):
-            if not any(x in el["k"] for x in ("p", "q", "v", "w", "a")):
+            if not any(x in el["k"] for x in ("p", "q", "v", "w", "x", "a")):
                 continue
             if el["t"] == "n":
                 d = line_dist(lat, lon, el["c"])
@@ -437,6 +446,13 @@ def main():
         want_kind = "p" if "building" in el["tags"] else "w"
         assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
         assert "c" in el, f"{k}: no centre"
+    # Game 5.0.13: amenity=ice_cream is "x", unless it is also a shop ("p").
+    ices = {k: el for k, el in by_key.items() if el["tags"].get("amenity") == "ice_cream"}
+    assert len(ices) == 6, f"ice cream parlours: {len(ices)}"
+    for k, el in ices.items():
+        want_kind = "p" if "shop" in el["tags"] else "x"
+        assert el["k"] == want_kind, f"{k}: kind {el['k']}, expected {want_kind}"
+        assert "c" in el, f"{k}: no centre"
     shops171 = [el for el in by_key.values() if el["tags"].get("shop") in ("perfumery", "shoes", "mobile_phone", "telecommunication", "electronics")]
     assert len(shops171) == 5 and all(el["k"] == "p" for el in shops171), "1.7.1 shops are plain points"
     motorway = [k for k in by_key if k[0] == "w" and by_key[k]["tags"].get("highway") == "motorway"]
@@ -449,7 +465,7 @@ def main():
         lat, lon = offset(LAT0, LON0, random.uniform(-6500, 6500), random.uniform(-6500, 6500))
         radius = random.choice([150, 200, 250, 600, 2000])
         want = {k for k, (kind, flat, lines) in expected.items()
-                if any(x in kind for x in ("p", "q", "v", "w", "a")) and obj_dist(lat, lon, flat, lines) <= radius}
+                if any(x in kind for x in ("p", "q", "v", "w", "x", "a")) and obj_dist(lat, lon, flat, lines) <= radius}
         got = archive_around(tiles, lat, lon, radius)
         missing = want - set(got)
         extra = set(got) - want
@@ -488,7 +504,7 @@ def main():
     assert summary.get("seek_index") == bt.SEEK_INDEX_VERSION, "summary without seek_index"
     centres = {}
     for k, (kind, flat, lines) in expected.items():
-        if not any(x in kind for x in ("p", "q", "v", "w", "a")):
+        if not any(x in kind for x in ("p", "q", "v", "w", "x", "a")):
             continue
         if k[0] == "n":
             centres[k] = flat[:2]
@@ -539,7 +555,8 @@ def main():
           f"{len(kinds_seen)} kinds present, {seek_failures} with differences")
     assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
             "FIELD", "PASTURE", "OPTICIAN", "BOOKSTORE", "TOY_STORE",
-            "HAIRDRESSER", "BEAUTY_SALON", "INTERIOR_STORE"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+            "HAIRDRESSER", "BEAUTY_SALON", "INTERIOR_STORE",
+            "PET_SHOP", "GIFT_SHOP", "JEWELLER", "ICE_CREAM_PARLOUR"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
     # Game 2.0.13: OPTICIAN comes after the places, at code 57 (the game's SeekConfig.SEEK_INDEX_TYPES).
     assert bt.SEEK_CODE["OPTICIAN"] == 57, bt.SEEK_CODE["OPTICIAN"]
     opticians = [e for (code, _, _), es in SEEK.items() if code == 57 for e in es]
@@ -554,6 +571,11 @@ def main():
     for code, shop in ((60, "hairdresser"), (61, "beauty"), (62, "interior_decoration")):
         found = [e for (c, _, _), es in SEEK.items() if c == code for e in es]
         assert len(found) == 2 and all(e["tags"].get("shop") == shop for e in found), (code, found)
+    # Game 5.0.13: PET_SHOP 63, GIFT_SHOP 64, JEWELLER 65, ICE_CREAM_PARLOUR 66.
+    assert [bt.SEEK_CODE[k] for k in ("PET_SHOP", "GIFT_SHOP", "JEWELLER", "ICE_CREAM_PARLOUR")] == [63, 64, 65, 66]
+    for code, want in ((63, 2), (64, 2), (65, 2), (66, 6)):
+        found = [e for (c, _, _), es in SEEK.items() if c == code for e in es]
+        assert len(found) == want, (code, len(found), found)
 
     # Game 2.0.8: places in the Seek index, each in its own square, only name / place / population.
     want_places = {}
