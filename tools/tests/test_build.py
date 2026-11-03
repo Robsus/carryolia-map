@@ -156,6 +156,44 @@ def make_map():
         lat, lon = rnd()
         m.node(lat, lon, random.choice([{"shop": "bakery"}, {"amenity": "cafe"}, {"amenity": "school"},
                                         {"craft": "carpenter"}, {"tourism": "museum"}]))
+    # Game 6.0.12: address points (see ADDRESS POINTS in build_tiles.py).
+    def square(lat, lon, half):
+        return [offset(lat, lon, dx, dy) for dx, dy in ((-half, -half), (half, -half), (half, half), (-half, half))]
+    lat, lon = offset(LAT0, LON0, 300, 7000)   # outside the random spread
+    m.way(square(lat, lon, 6), {"building": "yes", "test": "addr-one"}, closed=True)
+    m.node(lat, lon, {"addr:housenumber": "12", "addr:street": "Rue Baudin", "source": "BAN"})
+    lat, lon = offset(LAT0, LON0, 330, 7000)
+    m.way(square(lat, lon, 6), {"building": "yes", "test": "addr-two"}, closed=True)
+    m.node(*offset(lat, lon, -2, 0), {"addr:housenumber": "14", "addr:street": "Rue Baudin"})
+    m.node(*offset(lat, lon, 2, 0), {"addr:housenumber": "14bis", "addr:street": "Rue Baudin"})
+    lat, lon = offset(LAT0, LON0, 360, 7000)
+    m.way(square(lat, lon, 6), {"building": "yes", "addr:housenumber": "3", "test": "addr-own"}, closed=True)
+    m.node(lat, lon, {"addr:housenumber": "99"})
+    lat, lon = offset(LAT0, LON0, 390, 7000)
+    m.way(square(lat, lon, 6), {"building": "yes", "test": "addr-shop"}, closed=True)
+    m.node(lat, lon, {"addr:housenumber": "7", "shop": "bakery"})
+    lat, lon = offset(LAT0, LON0, 420, 7000)
+    corner = m.node(*offset(lat, lon, -6, -6), {"addr:housenumber": "5", "entrance": "main"})
+    ids = [corner] + [m.node(a, b) for a, b in square(lat, lon, 6)[1:]]
+    m.ways[m.next_way] = (ids + [corner], {"building": "yes", "test": "addr-corner"})
+    m.next_way += 1
+    lat, lon = offset(LAT0, LON0, 450, 7000)
+    m.node(lat, lon, {"addr:housenumber": "1", "addr:street": "Nowhere"})   # in no building
+
+    # Game 6.0.12: house-sized buildings (see HOUSE-SIZED BUILDINGS in build_tiles.py),
+    # in squares of their own beyond the random spread.
+    rich_lat, rich_lon = offset(LAT0, LON0, -3000, 8500)
+    for i in range(10):
+        a, b = offset(rich_lat, rich_lon, i * 25, 0)
+        m.way(square(a, b, 5), {"building": "yes", "addr:housenumber": str(i + 1)}, closed=True)
+    m.way(square(*offset(rich_lat, rich_lon, 0, 40), 5), {"building": "yes", "test": "house-rich"}, closed=True)
+    poor_lat, poor_lon = offset(LAT0, LON0, 3000, 8500)
+    m.way(square(poor_lat, poor_lon, 5), {"building": "yes", "test": "house-poor"}, closed=True)
+    m.way(square(*offset(poor_lat, poor_lon, 30, 0), 1.5), {"building": "yes", "test": "house-small"}, closed=True)
+    m.way(square(*offset(poor_lat, poor_lon, 80, 0), 15), {"building": "yes", "test": "house-big"}, closed=True)
+    m.way(square(*offset(poor_lat, poor_lon, 0, 40), 5), {"building": "yes", "shop": "bakery", "test": "house-shop"}, closed=True)
+    m.way(square(*offset(poor_lat, poor_lon, 30, 40), 5), {"building": "house", "test": "house-typed"}, closed=True)
+
     for content in ["oil", "water", "diesel", None]:
         lat, lon = rnd()
         tags = {"man_made": "storage_tank"}
@@ -457,6 +495,25 @@ def main():
     assert len(shops171) == 5 and all(el["k"] == "p" for el in shops171), "1.7.1 shops are plain points"
     motorway = [k for k in by_key if k[0] == "w" and by_key[k]["tags"].get("highway") == "motorway"]
     assert not motorway, "motorways are not roads for the game"
+    # Game 6.0.12: house numbers from address points.
+    addr = {el["tags"]["test"]: el["tags"] for el in by_key.values() if str(el["tags"].get("test", "")).startswith("addr-")}
+    assert set(addr) == {"addr-one", "addr-two", "addr-own", "addr-shop", "addr-corner"}, f"address test buildings: {set(addr)}"
+    assert addr["addr-one"].get("addr:housenumber") == "12" and addr["addr-one"].get("addr:street") == "Rue Baudin" \
+        and addr["addr-one"].get("carryolia:address") == "point", f"addr-one: {addr['addr-one']}"
+    assert sorted(addr["addr-two"].get("addr:housenumber", "").split(";")) == ["14", "14bis"], f"addr-two: {addr['addr-two']}"
+    assert addr["addr-own"].get("addr:housenumber") == "3" and "carryolia:address" not in addr["addr-own"], f"addr-own: {addr['addr-own']}"
+    assert "addr:housenumber" not in addr["addr-shop"], f"addr-shop: {addr['addr-shop']}"
+    assert addr["addr-corner"].get("addr:housenumber") == "5", f"addr-corner: {addr['addr-corner']}"
+    loose = [el for el in by_key.values() if el["t"] == "n" and el["tags"].get("addr:housenumber") and not
+             any(k in el["tags"] for k in ("shop", "amenity", "craft", "tourism"))]
+    assert not loose, f"address points must not be in the tiles: {loose[:3]}"
+    print("address points: ok")
+    house = {el["tags"]["test"]: el["tags"] for el in by_key.values() if str(el["tags"].get("test", "")).startswith("house-")}
+    assert set(house) == {"house-rich", "house-poor", "house-small", "house-big", "house-shop", "house-typed"}, f"house test buildings: {set(house)}"
+    marked = {k for k, t in house.items() if t.get("carryolia:house_sized") == "1"}
+    assert marked == {"house-poor"}, f"house-sized marks: {marked}"
+    assert not any(t.get("carryolia:house_sized") for t in addr.values()), "a building with a house number is never marked"
+    print("house-sized buildings: ok")
     print("single-object checks: ok")
 
     # Discovery circles.

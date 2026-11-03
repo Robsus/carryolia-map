@@ -83,6 +83,32 @@ The index format stays 1 (a higher number would make older versions treat
 every region as unindexed). An archive built before this simply has no
 place entries; the game then finds nothing and tries again later.
 
+ADDRESS POINTS (since game 6.0.12). In much of Europe (France above all)
+buildings come from a land registry as plain building=yes, and their
+addresses are separate nodes ("address points": addr:housenumber, addr:street
+and nothing that gives them another purpose). The game counts a building=yes
+with a house number as a residence (its BuildingParser, since 1.9.6), but the
+address points themselves were never kept. Now a building way WITHOUT its own
+addr:housenumber gets the house numbers of the address points inside its
+outline or on one of its corners: addr:housenumber (several joined with ";"),
+addr:street (the first one's) and carryolia:address=point. The address points
+themselves never go into the tiles. Not in the regions of
+ADDRESS_POINTS_SKIP_REGIONS (the Netherlands: its buildings already say what
+they are, from the BAG, and building=yes there is mostly sheds and garages).
+
+HOUSE-SIZED BUILDINGS (since game 6.0.12). Where hardly any building has an
+address (much of Spain, Italy, Romania, Turkey, Greece, Portugal, the UK: a
+sweep of 19 towns found 1-19% residences there), a plain building=yes is
+usually a home. Every square of HOUSE_CELL_DEGREES gets an address share:
+(buildings with their own addr:housenumber + address points) / buildings,
+counted in pass 1b. In a square below HOUSE_ADDRESS_SHARE_BELOW, a closed
+building=yes way without a house number, without any of NOT_A_HOME_KEYS and
+with a footprint of HOUSE_MIN_M2..HOUSE_MAX_M2 gets carryolia:house_sized=1;
+the game counts it as a residence like one with a house number. Where most
+buildings have addresses (Germany, Belgium, ...) a building=yes without one
+is usually a barn or annex, so nothing is marked there. Not in
+ADDRESS_POINTS_SKIP_REGIONS either.
+
 Usage:
   python build_tiles.py <filtered.osm.pbf> --name netherlands --out-dir out
 
@@ -130,6 +156,24 @@ CRAFT_POINTS = {"bakery", "sawmill", "carpenter", "tailor", "blacksmith", "metal
 INDUSTRIAL_POINTS = {"mine", "refinery", "oil", "petroleum", "scrap_yard"}
 BICYCLE_PARKING_MIN_CAPACITY = 50  # DiscoveryConfig.BICYCLE_PARKING_MIN_CAPACITY
 BICYCLE_PARKING_KINDS = {"building", "multi-storey", "underground"}
+
+# --- Address points (since game 6.0.12, see ADDRESS POINTS above) ---
+# Keys an address point may carry besides addr:* (a node with any other key,
+# a shop, a name, ..., is something else and lends its address to nobody).
+ADDRESS_POINT_EXTRA_KEYS = {"source", "ref", "note", "fixme", "FIXME", "check_date", "entrance",
+                            "door", "level", "created_by", "survey", "mapillary"}
+ADDRESS_POINTS_SKIP_REGIONS = {"netherlands"}
+ADDRESS_GRID_DEGREES = 0.002   # grid cells for looking address points up (~150-220 m)
+ADDRESS_MAX_NUMBERS = 6        # house numbers kept per building, at most
+
+# --- House-sized buildings (since game 6.0.12, see HOUSE-SIZED BUILDINGS above) ---
+HOUSE_CELL_DEGREES = 0.01          # address share per square of ~0.7-1.1 km
+HOUSE_ADDRESS_SHARE_BELOW = 0.2    # squares where fewer buildings than this have an address
+HOUSE_MIN_M2 = 40.0
+HOUSE_MAX_M2 = 300.0
+# The game's DiscoveryConfig.NOT_A_HOME_TAGS: a building with any of these is something else.
+NOT_A_HOME_KEYS = {"amenity", "shop", "office", "tourism", "healthcare", "craft", "man_made",
+                   "industrial", "leisure", "club", "sport", "emergency", "public_transport", "power"}
 
 AREA_LANDUSE = {
     "farmland", "meadow", "orchard", "vineyard", "greenhouse_horticulture", "plant_nursery",
@@ -502,6 +546,171 @@ def seek_entries(element):
 MAX_LAT = 85.0511287798
 
 
+def is_address_point(tags):
+    """True for a node that is only an address (see ADDRESS POINTS)."""
+    if not tags.get("addr:housenumber"):
+        return False
+    for k in tags:
+        if k.startswith("addr:"):
+            continue
+        if k.split(":")[0] not in ADDRESS_POINT_EXTRA_KEYS:
+            return False
+    return True
+
+
+class AddressPoints:
+    """The address points of a region, in a coarse grid (see ADDRESS POINTS)."""
+
+    def __init__(self):
+        self.lat = array("d")
+        self.lon = array("d")
+        self.numbers = []
+        self.streets = []
+        self.cells = {}
+
+    def __len__(self):
+        return len(self.numbers)
+
+    @staticmethod
+    def cell(lat, lon):
+        return int(math.floor(lat / ADDRESS_GRID_DEGREES)), int(math.floor(lon / ADDRESS_GRID_DEGREES))
+
+    def add(self, lat, lon, number, street):
+        i = len(self.numbers)
+        self.lat.append(lat)
+        self.lon.append(lon)
+        self.numbers.append(number)
+        self.streets.append(street)
+        self.cells.setdefault(self.cell(lat, lon), []).append(i)
+
+    def inside(self, flat):
+        """Indices of the address points inside the closed outline [flat] (lat, lon, ...) or on one of its corners."""
+        lats, lons = flat[0::2], flat[1::2]
+        s, n_, w, e = min(lats), max(lats), min(lons), max(lons)
+        (c0, d0), (c1, d1) = self.cell(s, w), self.cell(n_, e)
+        corners = set(zip(lats, lons))
+        found = []
+        for ci in range(c0, c1 + 1):
+            for di in range(d0, d1 + 1):
+                for i in self.cells.get((ci, di), ()):
+                    la, lo = self.lat[i], self.lon[i]
+                    if la < s or la > n_ or lo < w or lo > e:
+                        continue
+                    if (la, lo) in corners or point_in_ring(la, lo, lats, lons):
+                        found.append(i)
+        return found
+
+
+def point_in_ring(lat, lon, lats, lons):
+    """Ray casting: is (lat, lon) inside the ring given as parallel lists?"""
+    inside = False
+    j = len(lats) - 1
+    for i in range(len(lats)):
+        if (lats[i] > lat) != (lats[j] > lat) and \
+                lon < (lons[j] - lons[i]) * (lat - lats[i]) / (lats[j] - lats[i]) + lons[i]:
+            inside = not inside
+        j = i
+    return inside
+
+
+def house_cell(lat, lon):
+    return int(math.floor(lat / HOUSE_CELL_DEGREES)), int(math.floor(lon / HOUSE_CELL_DEGREES))
+
+
+def read_address_points(path, stats):
+    """Pass 1b: every address point of the file (see ADDRESS POINTS), and per
+    square the buildings and addresses (see HOUSE-SIZED BUILDINGS).
+    Returns (points, {square: address share})."""
+    points = AddressPoints()
+    buildings = {}   # square -> [buildings, with their own house number]
+    for obj in osmium.FileProcessor(path, osmium.osm.NODE | osmium.osm.WAY):
+        if not obj.tags:
+            continue
+        if obj.is_way():
+            if "building" not in obj.tags:
+                continue
+            loc = next((nd.location for nd in obj.nodes if nd.location.valid()), None)
+            if loc is None:
+                continue
+            c = buildings.setdefault(house_cell(deg(loc.y), deg(loc.x)), [0, 0])
+            c[0] += 1
+            if "addr:housenumber" in obj.tags:
+                c[1] += 1
+            continue
+        if not obj.location.valid() or "addr:housenumber" not in obj.tags:
+            continue
+        tags = {t.k: t.v for t in obj.tags}
+        if not is_address_point(tags):
+            continue
+        points.add(deg(obj.location.y), deg(obj.location.x), tags["addr:housenumber"], tags.get("addr:street", ""))
+    stats.count("address_points", len(points))
+    point_counts = {}
+    for i in range(len(points)):
+        cell = house_cell(points.lat[i], points.lon[i])
+        point_counts[cell] = point_counts.get(cell, 0) + 1
+    shares = {cell: min(1.0, (own + point_counts.get(cell, 0)) / total)
+              for cell, (total, own) in buildings.items() if total}
+    stats.count("house_squares_few_addresses", sum(1 for v in shares.values() if v < HOUSE_ADDRESS_SHARE_BELOW))
+    return points, shares
+
+
+def ring_area_m2(flat):
+    """Footprint of a closed outline (lat, lon, ...) in square metres (flat-earth, fine for a building)."""
+    lat0 = flat[0]
+    k = 111320.0
+    c = math.cos(math.radians(lat0))
+    s = 0.0
+    n = len(flat) // 2
+    for i in range(n):
+        j = (i + 1) % n
+        s += (flat[2 * i + 1] * c) * flat[2 * j] - (flat[2 * j + 1] * c) * flat[2 * i]
+    return abs(s) / 2 * k * k
+
+
+def with_house_size(tags, flat, shares, stats):
+    """[tags] plus carryolia:house_sized=1 for a plain, house-sized building=yes
+    in a square with few addresses (see HOUSE-SIZED BUILDINGS); else [tags]."""
+    if not shares or tags.get("building") != "yes" or tags.get("addr:housenumber"):
+        return tags
+    if any(k in tags for k in NOT_A_HOME_KEYS):
+        return tags
+    if len(flat) < 8 or flat[0] != flat[-2] or flat[1] != flat[-1]:
+        return tags
+    share = shares.get(house_cell(flat[0], flat[1]))
+    if share is None or share >= HOUSE_ADDRESS_SHARE_BELOW:
+        return tags
+    if not (HOUSE_MIN_M2 <= ring_area_m2(flat) <= HOUSE_MAX_M2):
+        return tags
+    tags = dict(tags)
+    tags["carryolia:house_sized"] = "1"
+    stats.count("buildings_house_sized")
+    return tags
+
+
+def with_point_address(tags, flat, points, stats):
+    """[tags] of a building way, with the house numbers of the address points
+    inside it when it has none of its own (see ADDRESS POINTS); else [tags]."""
+    if points is None or not len(points) or "building" not in tags or tags.get("addr:housenumber"):
+        return tags
+    if len(flat) < 8 or flat[0] != flat[-2] or flat[1] != flat[-1]:
+        return tags  # not a closed outline
+    found = points.inside(flat)
+    if not found:
+        return tags
+    numbers = []
+    for i in found:
+        if points.numbers[i] not in numbers:
+            numbers.append(points.numbers[i])
+    tags = dict(tags)
+    tags["addr:housenumber"] = ";".join(numbers[:ADDRESS_MAX_NUMBERS])
+    street = next((points.streets[i] for i in found if points.streets[i]), "")
+    if street and not tags.get("addr:street"):
+        tags["addr:street"] = street
+    tags["carryolia:address"] = "point"
+    stats.count("buildings_with_point_address")
+    return tags
+
+
 def tile_xy(lat, lon, n):
     lat = max(-MAX_LAT, min(MAX_LAT, lat))
     x = (lon + 180.0) / 360.0 * n
@@ -753,6 +962,9 @@ def nodes_and_ways_worker(path, zoom, needed_ways, workers, index, lines_path):
         if not obj.tags or len(flat) < 2:
             continue
         tags = {t.k: t.v for t in obj.tags}
+        # Since game 6.0.12: house numbers from the address points inside (see ADDRESS POINTS).
+        tags = with_point_address(tags, flat, ADDRESS_POINTS, stats)
+        tags = with_house_size(tags, flat, ADDRESS_SHARES, stats)
         kind = point_kind(tags, "w") + ("a" if is_area(tags, "w") else "") + \
                ("r" if is_road(tags, "w") else "")
         if not kind:
@@ -785,6 +997,12 @@ def nodes_and_ways_worker(path, zoom, needed_ways, workers, index, lines_path):
 
 
 _WORKER_ARGS = None
+
+# Since game 6.0.12: the region's address points (read in pass 1b, before the
+# workers are forked, so every worker shares them; None = none / skipped),
+# and the address share per square (see HOUSE-SIZED BUILDINGS).
+ADDRESS_POINTS = None
+ADDRESS_SHARES = None
 
 
 def _run_worker(index):
@@ -991,6 +1209,7 @@ def sort_and_write(lines_glob, tmp_dir, part_writer, stats, sort_memory, workers
 
 
 def main():
+    global ADDRESS_POINTS, ADDRESS_SHARES
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input", help="filtered .osm.pbf (see filters.txt)")
     ap.add_argument("--name", required=True, help="region name, used in file names (e.g. netherlands)")
@@ -1026,9 +1245,20 @@ def main():
         log(f"  {len(wanted):,} relations, {len(needed_ways):,} member ways needed")
 
         t = time.time()
+        if args.name in ADDRESS_POINTS_SKIP_REGIONS:
+            log("Pass 1b/4: address points: skipped in this region")
+        else:
+            log("Pass 1b/4: address points and address share per square")
+            ADDRESS_POINTS, ADDRESS_SHARES = read_address_points(located, stats)
+            log(f"  {len(ADDRESS_POINTS):,} address points, "
+                f"{stats.counts.get('house_squares_few_addresses', 0):,} squares with few addresses")
+        stats.phases["address_points"] = time.time() - t
+
+        t = time.time()
         log(f"Pass 2/4: nodes and ways ({args.workers} processes)")
         member_geometry = read_nodes_and_ways(located, args.zoom, needed_ways, args.workers, tmp_dir, stats)
         os.remove(located)
+        ADDRESS_POINTS = ADDRESS_SHARES = None
         stats.phases["nodes_ways"] = time.time() - t
         lines_path = os.path.join(tmp_dir, "lines-relations.gz")
         sink = LineSink(lines_path, args.zoom, stats)
@@ -1109,6 +1339,10 @@ def main():
           f"{c.get('ways_a', 0):,} area ways, {c.get('ways_r', 0):,} roads")
     print(f"Relations:        {c.get('relations_wanted', 0):,} wanted, {c.get('relations_big', 0):,} too big, "
           f"{c.get('relation_tile_entries', 0):,} tile entries")
+    print(f"Address points:   {c.get('address_points', 0):,}, house numbers given to "
+          f"{c.get('buildings_with_point_address', 0):,} buildings")
+    print(f"House-sized:      {c.get('buildings_house_sized', 0):,} plain buildings marked in "
+          f"{c.get('house_squares_few_addresses', 0):,} squares with few addresses")
     print(f"Seek index:       {c.get('seek_entries', 0):,} entries (zoom {SEEK_INDEX_ZOOM} squares), "
           f"{c.get('places', 0):,} places")
     print(f"Shared objects:   {c.get('shared_objects', 0):,} ({c.get('ways_shared', 0):,} ways, "
