@@ -231,6 +231,10 @@ def make_map():
     for shop in ["pet", "pet", "gift", "gift", "jewelry", "jewellery"]:
         lat, lon = rnd()
         m.node(lat, lon, {"shop": shop})
+    # game 6.0.17: Seek kind CHEMIST
+    for _ in range(3):
+        lat, lon = rnd()
+        m.node(lat, lon, {"shop": "chemist"})
     for _ in range(12):  # game 1.7.1: drinking water taps ("v")
         lat, lon = rnd()
         m.node(lat, lon, {"amenity": "drinking_water"})
@@ -613,7 +617,7 @@ def main():
     assert {"SHOP", "FOREST", "WATER", "PUB", "BAR", "OIL_TANK", "BICYCLE_PARKING", "SCRAPYARD", "GREENHOUSE",
             "FIELD", "PASTURE", "OPTICIAN", "BOOKSTORE", "TOY_STORE",
             "HAIRDRESSER", "BEAUTY_SALON", "INTERIOR_STORE",
-            "PET_SHOP", "GIFT_SHOP", "JEWELLER", "ICE_CREAM_PARLOUR"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
+            "PET_SHOP", "GIFT_SHOP", "JEWELLER", "ICE_CREAM_PARLOUR", "CHEMIST"} <= kinds_seen, f"kinds in the test map: {sorted(kinds_seen)}"
     # Game 2.0.13: OPTICIAN comes after the places, at code 57 (the game's SeekConfig.SEEK_INDEX_TYPES).
     assert bt.SEEK_CODE["OPTICIAN"] == 57, bt.SEEK_CODE["OPTICIAN"]
     opticians = [e for (code, _, _), es in SEEK.items() if code == 57 for e in es]
@@ -633,6 +637,10 @@ def main():
     for code, want in ((63, 2), (64, 2), (65, 2), (66, 6)):
         found = [e for (c, _, _), es in SEEK.items() if c == code for e in es]
         assert len(found) == want, (code, len(found), found)
+    # Game 6.0.17: CHEMIST 67.
+    assert bt.SEEK_CODE["CHEMIST"] == 67, bt.SEEK_CODE["CHEMIST"]
+    chemists = [e for (c, _, _), es in SEEK.items() if c == 67 for e in es]
+    assert len(chemists) == 3 and all(e["tags"].get("shop") == "chemist" for e in chemists), chemists
 
     # Game 2.0.8: places in the Seek index, each in its own square, only name / place / population.
     want_places = {}
