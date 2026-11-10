@@ -338,6 +338,9 @@ SEEK_TYPES = [
     # (shop=jewelry / jewellery) and ice cream parlours (amenity=ice_cream, letter
     # "x", or shop=ice_cream). Only amenity=ice_cream is new in the tiles.
     "PET_SHOP", "GIFT_SHOP", "JEWELLER", "ICE_CREAM_PARLOUR",
+    # Since game 6.0.17: chemists (shop=chemist, drugstores), the game's new
+    # workshop. Already in the tiles; only the kind is new.
+    "CHEMIST",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -496,6 +499,9 @@ def seek_matches(tags, osm_type):
         point("JEWELLER")
     if amenity == "ice_cream" or shop == "ice_cream":
         point("ICE_CREAM_PARLOUR")
+    # Since game 6.0.17.
+    if shop == "chemist":
+        point("CHEMIST")
     return out
 
 
