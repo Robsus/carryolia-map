@@ -1,6 +1,6 @@
 # Map data status
 
-Updated 2026-11-19 22:38 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
+Updated 2026-11-19 22:50 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
 
 | Region | Release | OSM data of | Archive (MB) | Parts | Monthly day |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -57,7 +57,7 @@ Updated 2026-11-19 22:38 UTC: 105 of 105 regions built. Written by the "Build ma
 | limousin | limousin-2026-11-19-r21 | 2026-11-18 | 223 | 1 | 6 |
 | lithuania | lithuania-2026-11-19-r21 | 2026-11-18 | 500 | 1 | 3 |
 | lodzkie | lodzkie-2026-11-19-r21 | 2026-11-18 | 260 | 1 | 2 |
-| lorraine | lorraine-2026-11-19-r20 | 2026-11-18 | 326 | 1 | 8 |
+| lorraine | lorraine-2026-11-19-r21 | 2026-11-18 | 326 | 1 | 8 |
 | lubelskie | lubelskie-2026-11-19-r21 | 2026-11-18 | 283 | 1 | 2 |
 | lubuskie | lubuskie-2026-11-19-r21 | 2026-11-18 | 149 | 1 | 26 |
 | luxembourg | luxembourg-2026-11-19-r21 | 2026-11-18 | 77 | 1 | 26 |
