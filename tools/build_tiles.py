@@ -76,6 +76,12 @@ from 1), in the same {"v": 1, "e": [...]} layout as a tile:
 The summary (and so map-data.json) says "seek_index": SEEK_INDEX_VERSION;
 a region without it is searched through Overpass, as before.
 
+FERRIES IN THE INDEX (since game 11.0.7): every ferry that is a road (letter
+"r", see is_ferry()) also gets an index entry of kind FERRY with both landings,
+{"t": "w", "id", "c": the middle, "g": [lat0, lon0, lat1, lon1], "tags": {"name"}},
+so the game finds the ferries within 5 km of its bases from the index and only
+then loads the road tiles along them. The ferry itself stays in the tiles as before.
+
 PLACES (since game 2.0.8, the "village, town, city" goals): named place nodes
 (place=village, town, city) go into the Seek index only, as kinds VILLAGE,
 TOWN and CITY, with just their name, place and population tags (big cities
@@ -372,6 +378,10 @@ SEEK_TYPES = [
     # Since game 6.0.17: chemists (shop=chemist, drugstores), the game's new
     # workshop. Already in the tiles; only the kind is new.
     "CHEMIST",
+    # Since game 11.0.7: ferries (the "r" ferry ways of game 10.0.4, see
+    # is_ferry()), so the game can load the ferries within 5 km of its bases
+    # without reading every tile there. Index only (see FERRIES IN THE INDEX).
+    "FERRY",
 ]
 SEEK_CODE = {name: i + 1 for i, name in enumerate(SEEK_TYPES)}
 
@@ -557,10 +567,29 @@ def seek_address(code, lat, lon):
     return SEEK_ADDRESS_ZOOM, code * n + clamp(int(x), n), clamp(int(y), n)
 
 
+def ferry_seek_entry(element):
+    """FERRIES IN THE INDEX (since game 11.0.7): ((z, x, y), entry) of a ferry
+    way that is a road (letter "r", route=ferry, see is_ferry()), or None. The
+    entry holds the two landings, "g": [lat0, lon0, lat1, lon1], and sits at the
+    middle between them ("c"); of the tags only the name is kept."""
+    tags = element.get("tags", {})
+    g = element.get("g") or []
+    if element.get("t") != "w" or "r" not in element.get("k", "") or tags.get("route") != "ferry" or len(g) < 4:
+        return None
+    a, b = [g[0], g[1]], [g[-2], g[-1]]
+    c = [round((a[0] + b[0]) / 2, 7), round((a[1] + b[1]) / 2, 7)]
+    kept = {k: tags[k] for k in ("name",) if k in tags}
+    return seek_address(SEEK_CODE["FERRY"], c[0], c[1]), {"t": "w", "id": element["id"], "c": c, "g": a + b, "tags": kept}
+
+
 def seek_entries(element):
     """The index entries of a tile element (needs "t", "id", "k", "tags", "c"):
     [((z, x, y), entry)], one per kind of SeekConfig.FILTERS it matches. Only
-    objects the discovery itself returns (letters p, q, v, w, x, a) are indexed."""
+    objects the discovery itself returns (letters p, q, v, w, x, a) are indexed,
+    plus (since game 11.0.7) ferries (ferry_seek_entry())."""
+    ferry = ferry_seek_entry(element)
+    if ferry is not None:
+        return [ferry]
     kinds = element.get("k", "")
     if not (has_point_letter(kinds) or "a" in kinds) or "c" not in element:
         return []
