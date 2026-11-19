@@ -1,6 +1,6 @@
 # Map data status
 
-Updated 2026-11-19 09:28 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
+Updated 2026-11-19 17:53 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
 
 | Region | Release | OSM data of | Archive (MB) | Parts | Monthly day |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -19,7 +19,7 @@ Updated 2026-11-19 09:28 UTC: 105 of 105 regions built. Written by the "Build ma
 | berlin | berlin-2026-11-19-r20 | 2026-11-17 | 104 | 1 | 18 |
 | bosnia-herzegovina | bosnia-herzegovina-2026-11-19-r20 | 2026-11-18 | 536 | 1 | 7 |
 | bourgogne | bourgogne-2026-11-19-r20 | 2026-11-18 | 414 | 1 | 7 |
-| brandenburg | brandenburg-2026-11-10-r19 | 2026-11-08 | 469 | 1 | 22 |
+| brandenburg | brandenburg-2026-11-19-r20 | 2026-11-18 | 469 | 1 | 22 |
 | bremen | bremen-2026-11-19-r20 | 2026-11-17 | 28 | 1 | 11 |
 | bretagne | bretagne-2026-11-19-r20 | 2026-11-18 | 545 | 1 | 7 |
 | bulgaria | bulgaria-2026-11-19-r20 | 2026-11-18 | 507 | 1 | 12 |
@@ -78,7 +78,7 @@ Updated 2026-11-19 09:28 UTC: 105 of 105 regions built. Written by the "Build ma
 | nordrhein-westfalen | nordrhein-westfalen-2026-11-19-r20 | 2026-11-17 | 1,326 | 1 | 18 |
 | norway | norway-2026-11-19-r20 | 2026-11-18 | 3,243 | 2 | 2 |
 | opolskie | opolskie-2026-11-19-r20 | 2026-11-18 | 113 | 1 | 9 |
-| pays-de-la-loire | pays-de-la-loire-2026-11-10-r19 | 2026-11-08 | 611 | 1 | 25 |
+| pays-de-la-loire | pays-de-la-loire-2026-11-19-r20 | 2026-11-18 | 611 | 1 | 25 |
 | picardie | picardie-2026-11-19-r20 | 2026-11-18 | 263 | 1 | 17 |
 | podkarpackie | podkarpackie-2026-11-19-r20 | 2026-11-18 | 291 | 1 | 25 |
 | podlaskie | podlaskie-2026-11-19-r20 | 2026-11-18 | 199 | 1 | 1 |
@@ -87,7 +87,7 @@ Updated 2026-11-19 09:28 UTC: 105 of 105 regions built. Written by the "Build ma
 | portugal | portugal-2026-11-19-r20 | 2026-11-18 | 892 | 1 | 19 |
 | provence-alpes-cote-d-azur | provence-alpes-cote-d-azur-2026-11-19-r20 | 2026-11-18 | 620 | 1 | 8 |
 | rheinland-pfalz | rheinland-pfalz-2026-11-10-r19 | 2026-11-08 | 468 | 1 | 8 |
-| rhone-alpes | rhone-alpes-2026-11-10-r19 | 2026-11-08 | 892 | 1 | 15 |
+| rhone-alpes | rhone-alpes-2026-11-19-r20 | 2026-11-18 | 893 | 1 | 15 |
 | romania | romania-2026-11-19-r20 | 2026-11-18 | 1,201 | 1 | 12 |
 | saarland | saarland-2026-11-19-r20 | 2026-11-17 | 82 | 1 | 20 |
 | sachsen | sachsen-2026-11-19-r20 | 2026-11-17 | 405 | 1 | 27 |
