@@ -1,6 +1,6 @@
 # Map data status
 
-Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
+Updated 2026-11-19 22:38 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
 
 | Region | Release | OSM data of | Archive (MB) | Parts | Monthly day |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -13,7 +13,7 @@ Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build ma
 | azores | azores-2026-11-19-r21 | 2026-11-18 | 35 | 1 | 26 |
 | baden-wuerttemberg | baden-wuerttemberg-2026-11-19-r21 | 2026-11-18 | 972 | 1 | 24 |
 | basse-normandie | basse-normandie-2026-11-19-r21 | 2026-11-18 | 264 | 1 | 6 |
-| bayern | bayern-2026-11-19-r20 | 2026-11-17 | 1,369 | 1 | 26 |
+| bayern | bayern-2026-11-19-r21 | 2026-11-18 | 1,369 | 1 | 26 |
 | belarus | belarus-2026-11-19-r21 | 2026-11-18 | 992 | 1 | 3 |
 | belgium | belgium-2026-11-19-r21 | 2026-11-18 | 1,114 | 1 | 13 |
 | berlin | berlin-2026-11-19-r21 | 2026-11-18 | 104 | 1 | 18 |
@@ -48,13 +48,13 @@ Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build ma
 | ile-de-france | ile-de-france-2026-11-19-r21 | 2026-11-18 | 438 | 1 | 20 |
 | ireland-and-northern-ireland | ireland-and-northern-ireland-2026-11-19-r21 | 2026-11-18 | 798 | 1 | 16 |
 | isle-of-man | isle-of-man-2026-11-19-r21 | 2026-11-18 | 12 | 1 | 7 |
-| isole | isole-2026-11-19-r20 | 2026-11-18 | 437 | 1 | 27 |
-| kosovo | kosovo-2026-11-19-r20 | 2026-11-18 | 81 | 1 | 5 |
+| isole | isole-2026-11-19-r21 | 2026-11-18 | 437 | 1 | 27 |
+| kosovo | kosovo-2026-11-19-r21 | 2026-11-18 | 81 | 1 | 5 |
 | kujawsko-pomorskie | kujawsko-pomorskie-2026-11-19-r21 | 2026-11-18 | 226 | 1 | 23 |
 | languedoc-roussillon | languedoc-roussillon-2026-11-19-r21 | 2026-11-18 | 500 | 1 | 1 |
 | latvia | latvia-2026-11-19-r21 | 2026-11-18 | 396 | 1 | 11 |
-| liechtenstein | liechtenstein-2026-11-19-r20 | 2026-11-18 | 5 | 1 | 16 |
-| limousin | limousin-2026-11-19-r20 | 2026-11-18 | 223 | 1 | 6 |
+| liechtenstein | liechtenstein-2026-11-19-r21 | 2026-11-18 | 5 | 1 | 16 |
+| limousin | limousin-2026-11-19-r21 | 2026-11-18 | 223 | 1 | 6 |
 | lithuania | lithuania-2026-11-19-r21 | 2026-11-18 | 500 | 1 | 3 |
 | lodzkie | lodzkie-2026-11-19-r21 | 2026-11-18 | 260 | 1 | 2 |
 | lorraine | lorraine-2026-11-19-r20 | 2026-11-18 | 326 | 1 | 8 |
@@ -65,7 +65,7 @@ Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build ma
 | malopolskie | malopolskie-2026-11-19-r21 | 2026-11-18 | 338 | 1 | 9 |
 | malta | malta-2026-11-19-r21 | 2026-11-18 | 10 | 1 | 12 |
 | mazowieckie | mazowieckie-2026-11-19-r21 | 2026-11-18 | 556 | 1 | 3 |
-| mecklenburg-vorpommern | mecklenburg-vorpommern-2026-11-19-r20 | 2026-11-17 | 256 | 1 | 9 |
+| mecklenburg-vorpommern | mecklenburg-vorpommern-2026-11-19-r21 | 2026-11-18 | 256 | 1 | 9 |
 | midi-pyrenees | midi-pyrenees-2026-11-19-r21 | 2026-11-18 | 690 | 1 | 8 |
 | moldova | moldova-2026-11-19-r21 | 2026-11-18 | 229 | 1 | 8 |
 | monaco | monaco-2026-11-19-r21 | 2026-11-18 | 1 | 1 | 2 |
@@ -99,7 +99,7 @@ Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build ma
 | slovakia | slovakia-2026-11-19-r21 | 2026-11-18 | 647 | 1 | 9 |
 | slovenia | slovenia-2026-11-19-r21 | 2026-11-18 | 570 | 1 | 5 |
 | spain | spain-2026-11-19-r21 | 2026-11-18 | 3,639 | 2 | 25 |
-| sud | sud-2026-11-19-r20 | 2026-11-18 | 904 | 1 | 26 |
+| sud | sud-2026-11-19-r21 | 2026-11-18 | 904 | 1 | 26 |
 | sweden | sweden-2026-11-19-r21 | 2026-11-18 | 3,178 | 2 | 8 |
 | swietokrzyskie | swietokrzyskie-2026-11-19-r21 | 2026-11-18 | 175 | 1 | 14 |
 | switzerland | switzerland-2026-11-19-r21 | 2026-11-18 | 857 | 1 | 22 |
@@ -108,4 +108,4 @@ Updated 2026-11-19 21:19 UTC: 105 of 105 regions built. Written by the "Build ma
 | wales | wales-2026-11-19-r21 | 2026-11-18 | 294 | 1 | 1 |
 | warminsko-mazurskie | warminsko-mazurskie-2026-11-19-r21 | 2026-11-18 | 222 | 1 | 3 |
 | wielkopolskie | wielkopolskie-2026-11-19-r21 | 2026-11-18 | 327 | 1 | 12 |
-| zachodniopomorskie | zachodniopomorskie-2026-11-19-r20 | 2026-11-18 | 213 | 1 | 7 |
+| zachodniopomorskie | zachodniopomorskie-2026-11-19-r21 | 2026-11-18 | 213 | 1 | 7 |
