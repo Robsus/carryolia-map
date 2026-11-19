@@ -42,3 +42,5 @@ r/leisure=park
 
 # --- Roads (RoutingConfig.ROAD_HIGHWAY_TYPES) ---
 w/highway=trunk,trunk_link,primary,primary_link,secondary,secondary_link,tertiary,tertiary_link,unclassified,residential,living_street,service,road,pedestrian,footway,path,steps,cycleway,bridleway,track
+# Since game 10.0.4: ferries count as roads (build_tiles.py MAX_FERRY_METERS keeps only short ones).
+w/route=ferry
