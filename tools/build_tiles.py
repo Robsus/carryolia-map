@@ -30,7 +30,9 @@ the Overpass answer it used to get (see the app's MapDataArchive):
                 (ice cream parlours mapped as amenity=ice_cream: QUERY_POINTS_5013),
                 skipped by older versions like "q". An object that is also "p" is only "p".
             a = discovery areas block ("out tags geom")
-            r = roads (RoadRepository, "out body" + nodes)
+            r = roads (RoadRepository, "out body" + nodes); since game 10.0.4 also
+                short ferry ways (route=ferry, see MAX_FERRY_METERS), which older
+                game versions skip (they only read ways with a highway= tag)
   "tags"  all OSM tags
   "c"     [lat, lon]: a node's position, or the centre of a way's/relation's
           bounding box (what Overpass sends as "center")
@@ -300,8 +302,37 @@ def is_area(tags, osm_type):
     return False
 
 
-def is_road(tags, osm_type):
-    return osm_type == "w" and tags.get("highway") in HIGHWAYS
+# Ferries (since game 10.0.4): a short ferry way (OSM route=ferry, e.g. a Rhine
+# crossing) is sent with the roads ("r"), so Travellers, carriers and lorries
+# can cross the water where people really do. Long ones (sea crossings) are
+# left out: the game's journeys are a few km at most, and a long line would
+# put the ferry into every tile it crosses. Older game versions read only
+# ways with a highway= tag from "r" elements, so they skip ferries.
+MAX_FERRY_METERS = 5000.0
+
+
+def line_length_m(flat):
+    """Length in metres of a flat [lat, lon, lat, lon, ...] line (equirectangular, fine at these lengths)."""
+    total = 0.0
+    for i in range(0, len(flat) - 3, 2):
+        lat1, lon1, lat2, lon2 = flat[i], flat[i + 1], flat[i + 2], flat[i + 3]
+        dy = (lat2 - lat1) * 111_320.0
+        dx = (lon2 - lon1) * 111_320.0 * math.cos(math.radians((lat1 + lat2) / 2))
+        total += math.hypot(dx, dy)
+    return total
+
+
+def is_ferry(tags, osm_type, flat=None):
+    """A ferry way short enough for the game (needs its geometry [flat] to tell)."""
+    if osm_type != "w" or tags.get("route") != "ferry" or flat is None:
+        return False
+    if tags.get("access") in ("no", "private") or tags.get("foot") == "no":
+        return False
+    return len(flat) >= 4 and line_length_m(flat) <= MAX_FERRY_METERS
+
+
+def is_road(tags, osm_type, flat=None):
+    return osm_type == "w" and (tags.get("highway") in HIGHWAYS or is_ferry(tags, osm_type, flat))
 
 
 # --- Seek index (see SEEK INDEX above; the game's SeekConfig.FILTERS) ---
@@ -972,7 +1003,7 @@ def nodes_and_ways_worker(path, zoom, needed_ways, workers, index, lines_path):
         tags = with_point_address(tags, flat, ADDRESS_POINTS, stats)
         tags = with_house_size(tags, flat, ADDRESS_SHARES, stats)
         kind = point_kind(tags, "w") + ("a" if is_area(tags, "w") else "") + \
-               ("r" if is_road(tags, "w") else "")
+               ("r" if is_road(tags, "w", flat) else "")
         if not kind:
             continue
         element = {"t": "w", "id": obj.id, "k": kind, "tags": tags, "g": flat}

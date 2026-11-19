@@ -282,6 +282,13 @@ def make_map():
             step = random.choice([30, 80, 300, 2500])
             pts.append(offset(*pts[-1], random.uniform(-step, step), random.uniform(-step, step)))
         m.way(pts, {"highway": random.choice(["residential", "footway", "primary", "motorway", "track"])})
+    # Game 10.0.4: ferries. A short river crossing is a road; a sea crossing isn't.
+    m.way([(LAT0 + 0.011, LON0 + 0.011), offset(LAT0 + 0.011, LON0 + 0.011, 600, 300)],
+          {"route": "ferry", "name": "Rheinfähre", "test": "ferry-short"})
+    m.way([(LAT0 - 0.011, LON0 - 0.011), offset(LAT0 - 0.011, LON0 - 0.011, 9000, 4000)],
+          {"route": "ferry", "name": "Long ferry", "test": "ferry-long"})
+    m.way([(LAT0 + 0.012, LON0 - 0.012), offset(LAT0 + 0.012, LON0 - 0.012, 300, 0)],
+          {"route": "ferry", "foot": "no", "test": "ferry-nofoot"})
     for _ in range(300):  # never asked for
         lat, lon = rnd()
         m.way(ring(lat, lon, 50, 5), {"landuse": "residential"}, closed=True)
@@ -322,10 +329,10 @@ def expected_objects(m):
     for wid, (ids, tags) in m.ways.items():
         if not tags:
             continue
+        flat = [v for nid in ids for v in m.nodes[nid][:2]]
         kind = bt.point_kind(tags, "w") + ("a" if bt.is_area(tags, "w") else "") + \
-               ("r" if bt.is_road(tags, "w") else "")
+               ("r" if bt.is_road(tags, "w", flat) else "")
         if kind:
-            flat = [v for nid in ids for v in m.nodes[nid][:2]]
             objs[("w", wid)] = (kind, flat, None)
     for rid, (members, tags) in m.rels.items():
         kind = bt.point_kind(tags, "r") + ("a" if bt.is_area(tags, "r") else "")
@@ -499,6 +506,11 @@ def main():
     assert len(shops171) == 5 and all(el["k"] == "p" for el in shops171), "1.7.1 shops are plain points"
     motorway = [k for k in by_key if k[0] == "w" and by_key[k]["tags"].get("highway") == "motorway"]
     assert not motorway, "motorways are not roads for the game"
+    # Game 10.0.4: short ferries are roads with their node ids; long ones and foot=no aren't sent.
+    ferries = {el["tags"].get("test"): el for el in by_key.values() if el["tags"].get("route") == "ferry"}
+    assert set(ferries) == {"ferry-short"}, f"ferries in the tiles: {set(ferries)}"
+    assert ferries["ferry-short"]["k"] == "r" and len(ferries["ferry-short"]["n"]) == 2, f"short ferry: {ferries['ferry-short']}"
+    print("ferries: ok")
     # Game 6.0.12: house numbers from address points.
     addr = {el["tags"]["test"]: el["tags"] for el in by_key.values() if str(el["tags"].get("test", "")).startswith("addr-")}
     assert set(addr) == {"addr-one", "addr-two", "addr-own", "addr-shop", "addr-corner"}, f"address test buildings: {set(addr)}"
