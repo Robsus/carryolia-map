@@ -601,8 +601,8 @@ def main():
         n_, e_ = offset(lat, lon, radius, radius)
         squares = tiles_for_box(s_, w_, n_, e_, bt.SEEK_INDEX_ZOOM)
         for name in bt.SEEK_TYPES:
-            if name in bt.PLACE_SEEK_KINDS.values():
-                continue  # checked below (game 2.0.8)
+            if name in bt.PLACE_SEEK_KINDS.values() or name == "FERRY":
+                continue  # checked below (game 2.0.8, game 11.0.7)
             code = bt.SEEK_CODE[name]
             want = {}
             for k, c in centres.items():
@@ -653,6 +653,18 @@ def main():
     assert bt.SEEK_CODE["CHEMIST"] == 67, bt.SEEK_CODE["CHEMIST"]
     chemists = [e for (c, _, _), es in SEEK.items() if c == 67 for e in es]
     assert len(chemists) == 3 and all(e["tags"].get("shop") == "chemist" for e in chemists), chemists
+
+    # Game 11.0.7: FERRY 68, only the ferries that are roads, with both landings, at their middle, name only.
+    assert bt.SEEK_CODE["FERRY"] == 68, bt.SEEK_CODE["FERRY"]
+    ferry_entries = [(x, y, e) for (c, x, y), es in SEEK.items() if c == 68 for e in es]
+    assert len(ferry_entries) == 1, f"ferries in the index: {ferry_entries}"
+    fx, fy, fe = ferry_entries[0]
+    short = ferries["ferry-short"]
+    assert fe["id"] == short["id"] and fe["g"] == short["g"][:2] + short["g"][-2:], fe
+    assert fe["tags"] == {"name": "Rheinfähre"}, fe["tags"]
+    mid = bt.tile_xy(fe["c"][0], fe["c"][1], n12)
+    assert (int(mid[0]), int(mid[1])) == (fx, fy), "ferry in the wrong square"
+    print("ferries in the index: 1 (the short one; the long and the foot=no one left out)")
 
     # Game 2.0.8: places in the Seek index, each in its own square, only name / place / population.
     want_places = {}
