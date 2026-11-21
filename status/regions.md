@@ -1,6 +1,6 @@
 # Map data status
 
-Updated 2026-11-19 22:50 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
+Updated 2026-11-21 10:45 UTC: 105 of 105 regions built. Written by the "Build map data" workflow; every region is rebuilt once a month on its own day.
 
 | Region | Release | OSM data of | Archive (MB) | Parts | Monthly day |
 | --- | --- | --- | ---: | ---: | ---: |
@@ -30,7 +30,7 @@ Updated 2026-11-19 22:50 UTC: 105 of 105 regions built. Written by the "Build ma
 | croatia | croatia-2026-11-19-r21 | 2026-11-18 | 472 | 1 | 15 |
 | cyprus | cyprus-2026-11-19-r21 | 2026-11-18 | 81 | 1 | 11 |
 | czech-republic | czech-republic-2026-11-19-r21 | 2026-11-18 | 1,437 | 1 | 28 |
-| denmark | denmark-2026-11-19-r20 | 2026-11-18 | 810 | 1 | 9 |
+| denmark | denmark-2026-11-21-r21 | 2026-11-20 | 811 | 1 | 9 |
 | dolnoslaskie | dolnoslaskie-2026-11-19-r21 | 2026-11-18 | 323 | 1 | 22 |
 | england | england-2026-11-19-r21 | 2026-11-18 | 2,744 | 2 | 12 |
 | estonia | estonia-2026-11-19-r21 | 2026-11-18 | 390 | 1 | 8 |
